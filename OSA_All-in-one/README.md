@@ -50,6 +50,7 @@ $ sudo scripts/bootstrap-aio.sh
 
 In order to implement any other services, add the name of the conf.d file name without the .yml.aio extension into the SCENARIO environment variable. Each key word should be delimited by an underscore. For example, the following will implement an AIO with barbican, cinder, glance, horizon, neutron, and nova. It will set the cinder storage back-end to ceph and will make use of LXC as the container back-end.
 ```
+; Set back-end using lxc container instead of run direct on machine
 $ export SCENARIO='aio_lxc_barbican_ceph_lxb'
 $ sudo scripts/bootstrap-aio.sh
 ```
@@ -102,8 +103,21 @@ $ sudo openstack-ansible openstack.osa.setup_openstack
 ## Interacting with an AIO
 ### 1. Using a GUI
 
-
 ### 2. Using a client or library
 
 ## Rebooting an AIO
-The horizon web interface provides a graphical interface for interacting with the AIO deployment. By default, the horizon API is available on port 443 of the host (or port 80, if SSL certificate configuration was disabled). As such, to interact with horizon, simply browse to the IP of the host.
+As the AIO includes all three cluster members of MariaDB/Galera, the cluster has to be re-initialized after the host is rebooted.
+```
+$ cd /opt/openstack-ansible/playbooks
+
+$ sudo openstack-ansible -e galera_ignore_cluster_state=true galera-install.yml
+. . .
+PLAY RECAP *********************************************************************
+aio1                       : ok=6    changed=0    unreachable=0    failed=0    skipped=4    rescued=0    ignored=0   
+aio1-galera-container-f4b1d506 : ok=67   changed=2    unreachable=0    failed=0    skipped=32   rescued=0    ignored=0   
+
+
+
+EXIT NOTICE [Playbook execution success] **************************************
+===============================================================================
+```
