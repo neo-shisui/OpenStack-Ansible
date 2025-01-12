@@ -68,3 +68,6 @@ network:
             interfaces: 
               - bond0
             mtu: 9000
+        br-dbaas:
+            interfaces: []
+            mtu: 9000
