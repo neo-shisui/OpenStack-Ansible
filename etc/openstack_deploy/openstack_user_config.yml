@@ -126,12 +126,12 @@ global_overrides:
 # galera, memcache, rabbitmq, utility
 shared-infra_hosts:
   shisui:
-    ip: 172.29.236.10
+    ip: 172.29.236.100
 
 repo-infra_hosts:
   shisui:
-    ip: 172.29.236.10
+    ip: 172.29.236.100
 
 load_balancer_hosts:
   shisui:
-    ip: 172.29.236.10
+    ip: 172.29.236.100

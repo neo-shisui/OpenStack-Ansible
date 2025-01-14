@@ -213,7 +213,8 @@ network:
     bridges:
         br-mgmt:
             addresses:
-            - 172.29.236.10/22
+            - 172.29.236.100/22   # Primary IP of br-mgmt
+            - 172.29.236.101/22   # Internal LB VIP
             interfaces:
             - bond0.10
             mtu: 9000
@@ -225,20 +226,19 @@ network:
                 - example.com
         br-storage:
             addresses:
-            - 172.21.244.10/22
+            - 172.29.244.100/22  # Corrected to match cidr_networks
             interfaces:
             - bond0.20
             mtu: 9000
-            # openvswitch: {}
         br-vxlan:
             addresses:
-            - 172.29.240.10/22
+            - 172.29.240.100/22
             interfaces:
             - bond0.30
             mtu: 9000
         br-ext:
             addresses:
-            - 192.1.1.10/22
+            - 192.1.1.100/22
             interfaces:
             - bond0.40
             routes:
@@ -248,6 +248,10 @@ network:
         br-vlan:
             interfaces: 
               - bond0
+            mtu: 9000
+        br-dbaas:
+            addresses:
+            - 172.29.252.100/22  # Added to match cidr_networks
             mtu: 9000
 ```
 
@@ -416,15 +420,15 @@ global_overrides:
 # galera, memcache, rabbitmq, utility
 shared-infra_hosts:
   shisui:
-    ip: 172.29.236.10
+    ip: 172.29.236.100
 
 repo-infra_hosts:
   shisui:
-    ip: 172.29.236.10
+    ip: 172.29.236.100
 
 load_balancer_hosts:
   shisui:
-    ip: 172.29.236.10
+    ip: 172.29.236.100
 ```
 
 Cấu hình file `/etc/openstack_deploy/user_variables.yml`: 
@@ -525,6 +529,7 @@ EXIT NOTICE [Playbook execution success] **************************************
 **Kiểm tra database cluster:**
 
 ```
+$ ansible galera_container -m shell  -a "mysql -h localhost -e 'show status like \"%wsrep_cluster_%\";'"
 ```
 
 
