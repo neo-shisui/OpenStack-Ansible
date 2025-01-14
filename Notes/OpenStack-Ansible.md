@@ -507,6 +507,24 @@ lxc-start: shisui-rabbit-mq-container-dbb60554: network.c: netdev_configure_serv
 
 ```
 $ sudo openstack-ansible openstack.osa.setup_infrastructure
+PLAY RECAP *********************************************************************
+localhost                  : ok=22   changed=0    unreachable=0    failed=0    skipped=25   rescued=0    ignored=0   
+shisui                     : ok=177  changed=2    unreachable=0    failed=0    skipped=116  rescued=0    ignored=0   
+shisui-galera-container-3ef45882 : ok=93   changed=7    unreachable=0    failed=0    skipped=35   rescued=0    ignored=0   
+shisui-memcached-container-87605c08 : ok=93   changed=6    unreachable=0    failed=0    skipped=35   rescued=0    ignored=0   
+shisui-rabbit-mq-container-cb81a39e : ok=93   changed=6    unreachable=0    failed=0    skipped=35   rescued=0    ignored=0   
+shisui-repo-container-7f0c3f7c : ok=93   changed=6    unreachable=0    failed=0    skipped=35   rescued=0    ignored=0   
+shisui-utility-container-38cb37ec : ok=96   changed=6    unreachable=0    failed=0    skipped=35   rescued=0    ignored=0   
+
+
+
+EXIT NOTICE [Playbook execution success] **************************************
+===============================================================================
+```
+
+**Kiểm tra database cluster:**
+
+```
 ```
 
 
