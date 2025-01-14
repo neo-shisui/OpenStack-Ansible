@@ -2,8 +2,8 @@
 
 ## Machine Install Info
 
-* Ubuntu 22.04.5
-* 100GB Disk SSD.
+* Ubuntu 24.04
+* 200GB Disk SSD.
 * 32GB RAM.
 
 ## I. Prepare the deployment host
@@ -59,8 +59,8 @@ $ sudo git clone -b stable/2024.2 https://opendev.org/openstack/openstack-ansibl
 $ cd /opt/openstack-ansible
 $ sudo scripts/bootstrap-ansible.sh
 ... Chạy thành công
-PLAY RECAP **********************************************************************************************************************
-localhost                  : ok=9    changed=3    unreachable=0    failed=0    skipped=5    rescued=0    ignored=0   
+PLAY RECAP **************************************************************************************************
+localhost             : ok=9    changed=3    unreachable=0    failed=0    skipped=5    rescued=0    ignored=0   
 
 System is bootstrapped and ready for use.
 ```
@@ -430,10 +430,6 @@ load_balancer_hosts:
 Cấu hình file `/etc/openstack_deploy/user_variables.yml`: 
 
 * https://github.com/neo-shisui/OpenStack-Ansible/blob/main/etc/openstack_deploy/user_variables.yml
-
-```
-
-```
 
 **Cài đặt các service khác:**
 

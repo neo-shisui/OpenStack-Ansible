@@ -32,7 +32,7 @@ network:
     bridges:
         br-mgmt:
             addresses:
-            - 172.29.236.10/22
+            - 172.29.236.100/22
             interfaces:
             - bond0.10
             mtu: 9000
@@ -44,20 +44,19 @@ network:
                 - example.com
         br-storage:
             addresses:
-            - 172.21.244.10/22
+            - 172.29.244.100/22  # Corrected to match cidr_networks
             interfaces:
             - bond0.20
             mtu: 9000
-            # openvswitch: {}
         br-vxlan:
             addresses:
-            - 172.29.240.10/22
+            - 172.29.240.100/22
             interfaces:
             - bond0.30
             mtu: 9000
         br-ext:
             addresses:
-            - 192.1.1.10/22
+            - 192.1.1.100/22
             interfaces:
             - bond0.40
             routes:
@@ -69,5 +68,6 @@ network:
               - bond0
             mtu: 9000
         br-dbaas:
-            interfaces: []
+            addresses:
+            - 172.29.252.100/22  # Added to match cidr_networks
             mtu: 9000
