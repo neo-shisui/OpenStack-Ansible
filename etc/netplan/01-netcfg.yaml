@@ -32,7 +32,8 @@ network:
     bridges:
         br-mgmt:
             addresses:
-            - 172.29.236.100/22
+            - 172.29.236.100/22   # Primary IP of br-mgmt
+            - 172.29.236.101/22   # Internal LB VIP
             interfaces:
             - bond0.10
             mtu: 9000
