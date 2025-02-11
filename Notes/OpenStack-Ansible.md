@@ -1,4 +1,4 @@
-# Install OpenStack-Ansible
+# Install OpenStack-Ansible 24.02
 
 ## Machine Install Info
 
@@ -8,9 +8,30 @@
 
 ## I. Prepare the deployment host
 
-[Link](https://docs.openstack.org/project-deploy-guide/openstack-ansible/latest/deploymenthost.html)
+### 1. Install Ansible in Virtual Environment
 
-Cài đặt các phần mềm sau (nếu chưa có):
+**Using home folder:**
+
+```
+$ sudo python3 -m venv /opt/ansible-venv
+$ source /opt/ansible-venv/bin/activate
+(ansible-venv) shisui@shisui:/opt/openstack-ansible$ pip install --upgrade pip
+(ansible-venv) shisui@shisui:/opt/openstack-ansible$ pip install ansible
+```
+
+**References:**
+
+* https://docs.openstack.org/project-deploy-guide/openstack-ansible/2024.2/deploymenthost.html
+
+Update and upgrade kernel:
+
+```
+$ sudo apt update
+$ sudo apt dist-upgrade
+$ sudo reboot now
+```
+
+Install software requirements:
 
 ```
 $ sudo apt install build-essential git chrony openssh-server python3-dev sudo
@@ -40,7 +61,7 @@ $ ssh-copy-id shisui@127.0.0.1
 $ ssh shisui@127.0.0.1
 ```
 
-Cấu hình network:
+Configure network:
 
 * Ansible cần SSH từ máy deployment đến `các container` bằng SSH để triển khai.
 
@@ -50,11 +71,11 @@ Cấu hình network:
   ```
 
 
-Cài OpenStack-Ansible trên deployment host:
+Bootstrap Ansible and the Ansible roles for the development environment.
 
 ```
 ; Clone source
-$ sudo git clone -b stable/2024.2 https://opendev.org/openstack/openstack-ansible /opt/openstack-ansible
+$ sudo git clone -b stable/2024.2 https://github.com/openstack/openstack-ansible /opt/openstack-ansible
 ; Run Ansible bootstrap script
 $ cd /opt/openstack-ansible
 $ sudo scripts/bootstrap-ansible.sh
@@ -70,7 +91,9 @@ System is bootstrapped and ready for use.
 
 ## II. Prepare the target hosts
 
-[Link](https://docs.openstack.org/project-deploy-guide/openstack-ansible/latest/targethosts.html)
+References:
+
+* https://docs.openstack.org/project-deploy-guide/openstack-ansible/latest/targethosts.html
 
 **Cài các phần mềm cần thiết:**
 
@@ -100,24 +123,34 @@ $ ssh-copy-id shisui@127.0.0.1
     $ sudo apt install lvm2
     ; Xác định ổ đĩa để dùng LVM
     $ sudo lsblk
-    sda           8:0    0 465,8G  0 disk 
-    ├─sda1        8:1    0 319,3G  0 part /media/shisui/New Volume
-    └─sda2        8:2    0 146,5G  0 part 
-    ; Unmount /dev/sda2 (nếu đang mount)
-    $ sudo umount /dev/sda2
+    nvme0n1     259:0    0 476,9G  0 disk
+    └─nvme0n1p6 259:6    0   100G  0 part
+    ; Unmount /dev/nvme0n1p6 (nếu đang mount)
+    $ sudo umount /dev/nvme0n1p6
     ; Tạo physical volume
-    $ sudo pvcreate --metadatasize 2048 /dev/sda2
-    WARNING: ext4 signature detected on /dev/sda2 at offset 1080. Wipe it? [y/n]: y
-      Wiping ext4 signature on /dev/sda2.
-      Physical volume "/dev/sda2" successfully created.
-    $ sudo vgcreate cinder-volumes /dev/sda2
+    $ sudo pvcreate --metadatasize 2048 /dev/nvme0n1p6
+    WARNING: ext4 signature detected on /dev/nvme0n1p6 at offset 1080. Wipe it? [y/n]: y
+      Wiping ext4 signature on /dev/nvme0n1p6.
+      Physical volume "/dev/nvme0n1p6" successfully created.
+    $ sudo vgcreate cinder-volumes /dev/nvme0n1p6
       Volume group "cinder-volumes" successfully created
     ```
     
-
+  
 * Tùy chọn, cấu hình LVM cho **lxc**:
 
   * *Create an LVM volume group named `lxc` for container file systems and set `lxc_container_backing_store: lvm` in user_variables.yml if you want to use LXC with LVM. If the `lxc` volume group does not exist, containers are automatically installed on the file system under `/var/lib/lxc` by default.*
+  
+    ```
+    $ sudo umount /dev/nvme0n1p7
+    ; Tạo physical volume
+    $ sudo pvcreate --metadatasize 2048 /dev/nvme0n1p7
+    WARNING: ext4 signature detected on /dev/nvme0n1p7 at offset 1080. Wipe it? [y/n]: y
+      Wiping ext4 signature on /dev/nvme0n1p7.
+      Physical volume "/dev/nvme0n1p7" successfully created.
+    $ sudo vgcreate lxc /dev/nvme0n1p7
+      Volume group "cinder-volumes" successfully created
+    ```
 
 
 **Cấu hình network:**
@@ -259,22 +292,41 @@ network:
 $ sudo netplan apply
 $ sudo nmcli connection show
 NAME                UUID                                  TYPE      DEVICE     
-netplan-br-vlan     d7656275-8c26-36f5-8d48-60947be35b40  bridge    br-vlan    
-Duong 5G            b71390bb-c14e-42b6-a9b9-b6f43031812f  wifi      wlp0s20f3  
 netplan-br-ext      ccc2d2ce-c198-3f16-aec3-920b74017c24  bridge    br-ext     
 netplan-br-mgmt     8cb6a060-3ec6-3b6b-93f0-ce345bf70e78  bridge    br-mgmt    
+netplan-br-dbaas    6457cd2d-e10c-32e5-854d-067b37dc5b94  bridge    br-dbaas   
 netplan-br-storage  d2c50d30-d214-3e5a-95d3-39fce462f768  bridge    br-storage 
 netplan-br-vxlan    164001fc-1472-3ac4-ab1b-8a1eadcbfa74  bridge    br-vxlan   
 netplan-bond0       ed99d67c-a858-3e46-8bab-6a5caa421e47  bond      bond0      
-netplan-bond0.10    5f316ba2-f712-3dab-95c7-6f926fbd15f5  vlan      bond0.10   
-netplan-bond0.20    11fe96d7-e0e1-32d7-8fee-5a5927478c8b  vlan      bond0.20   
-netplan-bond0.30    0eb42139-82eb-387c-a597-711a86f3bfe1  vlan      bond0.30   
-netplan-bond0.40    a7acbc26-d26c-31f6-abc3-a8cb23ad5866  vlan      bond0.40 
+netplan-br-vlan     d7656275-8c26-36f5-8d48-60947be35b40  bridge    br-vlan    
+lo                  c03b4b70-ab54-41cd-ab50-f44d56b947ff  loopback  lo         
+lxcbr0              ea3bac37-8b59-4b4b-b82b-6a3baf7d9d0f  bridge    lxcbr0        
+netplan-bond0.10    5f316ba2-f712-3dab-95c7-6f926fbd15f5  vlan      --         
+netplan-bond0.20    11fe96d7-e0e1-32d7-8fee-5a5927478c8b  vlan      --         
+netplan-bond0.30    0eb42139-82eb-387c-a597-711a86f3bfe1  vlan      --         
+netplan-bond0.40    a7acbc26-d26c-31f6-abc3-a8cb23ad5866  vlan      --         
+netplan-eno1        10838d80-caeb-349e-ba73-08ed16d4d666  ethernet  --         
+netplan-eno2        80ab1970-e833-372e-8635-f330b7d9f1f0  ethernet  -- 
+
 ```
+
+Using Ansible OpenStack Networking:
+
+Config file `/etc/network/interfaces.d/aio_interfaces.cfg`:
+
+```
+
+```
+
+
 
 ## III. Configure the deployment
 
-[Link](https://docs.openstack.org/project-deploy-guide/openstack-ansible/latest/configure.html). Bao gồm:
+References:
+
+* https://docs.openstack.org/project-deploy-guide/openstack-ansible/latest/configure.html). 
+
+Bao gồm:
 
 * Cấu hình **target host networking**:  to define bridge interfaces and networks.
 * A list of target hosts on which to install the software.
@@ -480,8 +532,8 @@ Chạy 3 playbook:
 ```
 $ sudo openstack-ansible openstack.osa.setup_hosts
 PLAY RECAP **************************************************************************************************
-localhost                  : ok=22   changed=0    unreachable=0    failed=0    skipped=25   rescued=0    ignored=0   
-shisui                     : ok=179  changed=2    unreachable=0    failed=0    skipped=114  rescued=0    ignored=0   
+localhost             : ok=22   changed=0    unreachable=0    failed=0    skipped=25   rescued=0    ignored=0   
+shisui                : ok=179  changed=2    unreachable=0    failed=0    skipped=114  rescued=0    ignored=0   
 shisui-galera-container-202ccd05 : ok=96   changed=5    unreachable=0    failed=0    skipped=35   rescued=0    ignored=0   
 shisui-memcached-container-2ff984ea : ok=93   changed=5    unreachable=0    failed=0    skipped=35   rescued=0    ignored=0   
 shisui-rabbit-mq-container-dbb60554 : ok=99   changed=28   unreachable=0    failed=0    skipped=33   rescued=0    ignored=0   
@@ -507,6 +559,40 @@ lxc-start: shisui-rabbit-mq-container-dbb60554: network.c: netdev_configure_serv
 -> Update file /etc/netplan/01-netcfg.yaml
 ```
 
+Lỗi:
+```
+TASK [Get list of repo packages] ****************************************************************************************************************
+fatal: [shisui-utility-container-38cb37ec]: FAILED! => {"changed": false, "content": "", "elapsed": 30, "msg": "Status code was -1 and not [200]: Request failed: <urlopen error timed out>", "redirected": false, "status": -1, "url": "http://172.29.236.101:8181/constraints/upper_constraints_cached.txt"}
+```
+
+Giải pháp:
+
+```
+; Kiểm tra config của HAProxy
+$ sudo cat /etc/haproxy/haproxy.cfg
+backend repo_all-back
+    mode http
+    balance leastconn
+    stick-table  type ipv6  size 256k  expire 10s  store http_err_rate(10s)
+    http-request track-sc0 src
+    http-request deny deny_status 429 if { sc_http_err_rate(0) gt 20 } !{ src 192.168.0.0/16 } !{ src 172.16.0.0/12 } !{ src 10.0.0.0/8 }
+    option forwardfor
+    option httpchk
+    http-check send hdr User-Agent "osa-haproxy-healthcheck" meth HEAD uri /constraints/upper_constraints_cached.txt
+    http-check expect status 200
+
+
+    server shisui-repo-container-7f0c3f7c 172.29.238.24:8181 check port 8181 inter 12000 rise 3 fall 3
+; Restart lại container shisui-repo-container-7f0c3f7c
+$ sudo lxc-stop  -n shisui-repo-container-7f0c3f7c
+$ sudo lxc-start -n shisui-repo-container-7f0c3f7c
+; Restart shisui-utility-container-38cb37ec
+$ sudo lxc-stop  -n shisui-utility-container-38cb37ec
+$ sudo lxc-start -n shisui-utility-container-38cb37ec
+```
+
+
+
 **Chạy infrastructure setup playbook:**
 
 ```
@@ -526,22 +612,23 @@ EXIT NOTICE [Playbook execution success] **************************************
 ===============================================================================
 ```
 
-**Kiểm tra database cluster:**
+**Kiểm tra database cluster:** myssql trong container đang bị lỗi, không start được.
 
 ```
-$ ansible galera_container -m shell  -a "mysql -h localhost -e 'show status like \"%wsrep_cluster_%\";'"
+$ cd /opt/openstack-ansible/
+$ sudo ansible galera_container -m shell  -a "mysql -h localhost -e 'show status like \"%wsrep_cluster_%\";'"
 ```
 
+**Chạy playbook cài OpenStack:**
 
+```
+$ sudo openstack-ansible openstack.osa.setup_openstack
+```
 
 ## V. Verify OpenStack operation
-
-
 
 ## References
 
 [OpenStack-Ansible Deployment Guide](https://docs.openstack.org/project-deploy-guide/openstack-ansible/latest/overview.html)
 
 [OpenStack-Ansible Architecture](https://docs.openstack.org/openstack-ansible/latest/reference/architecture/index.html)
-
-[]

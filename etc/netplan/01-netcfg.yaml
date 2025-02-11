@@ -65,6 +65,9 @@ network:
                 via: 192.1.1.1
             #gateway4: 192.1.1.1
         br-vlan:
+            addresses:
+            - 172.29.248.100/22
+            - 172.29.248.1/22
             interfaces: 
               - bond0
             mtu: 9000

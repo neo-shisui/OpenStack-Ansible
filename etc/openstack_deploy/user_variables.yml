@@ -19,7 +19,7 @@
 ###
 
 ## Debug and Verbose options.
-debug: true # false
+debug: false
 
 ## Set the service setup host
 # The default is to use localhost (the deploy host where ansible runs),
@@ -48,7 +48,7 @@ install_method: source
 # Note that "swift" is automatically set as the default back-end if there
 # are any swift hosts in the environment. Use this setting to override
 # this automation if you wish for a different default back-end.
-glance_default_store: file
+# glance_default_store: file
 
 ## Ceph pool name for Glance to use
 # glance_rbd_store_pool: images
@@ -113,7 +113,7 @@ glance_default_store: file
 # removed for security reasons and a new userid 'monitoring' has been created
 # with the 'monitoring' user tag. In order to modify the userid, uncomment the
 # following and change 'monitoring' to your userid of choice.
-rabbitmq_monitoring_userid: monitoring
+# rabbitmq_monitoring_userid: monitoring
 
 
 ## Additional pinning generator that will allow for more packages to be pinned as you see fit.
@@ -126,6 +126,8 @@ rabbitmq_monitoring_userid: monitoring
 #   - { package: "libvirt-bin", version: "1.2.2-0ubuntu13.1.9" }
 #   - { package: "rabbitmq-server", origin: "www.rabbitmq.com" }
 #   - { package: "*", release: "MariaDB" }
+lxc_container_backing_store: lvm
+lxc_host_lvm_vg: lxc
 
 
 ## Environment variable settings
@@ -159,7 +161,7 @@ rabbitmq_monitoring_userid: monitoring
 ## SSH connection wait time
 # If an increased delay for the ssh connection check is desired,
 # uncomment this variable and set it appropriately.
-ssh_delay: 5
+#ssh_delay: 5
 
 
 ## HAProxy and keepalived
@@ -168,7 +170,7 @@ ssh_delay: 5
 # group_vars/all/keepalived.yml) in your user space if necessary.
 #
 # Uncomment this to disable keepalived installation (cf. documentation)
-# haproxy_use_keepalived: true	 # False
+# haproxy_use_keepalived: False
 #
 # HAProxy Keepalived configuration (cf. documentation)
 # Make sure that this is set correctly according to the CIDR used for your
