@@ -1,4 +1,4 @@
 ---
 load_balancer_hosts:
   shisui:
-    ip: 172.29.236.10
+    ip: 172.29.236.101

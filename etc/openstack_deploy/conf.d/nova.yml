@@ -1,0 +1,8 @@
+---
+compute-infra_hosts:
+  shisui:
+    ip: 172.29.236.100
+
+compute_hosts:
+  shisui:
+    ip: 172.29.236.100

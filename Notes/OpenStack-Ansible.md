@@ -489,9 +489,174 @@ Cấu hình file `/etc/openstack_deploy/user_variables.yml`:
 
 **Cài đặt các service khác:**
 
-* Cách để cài thêm service: 
+Cách để cài thêm service: 
 
-  * Tạo file config trong folder: `/etc/openstack_deploy/conf.d/`.
+* Tạo file config trong folder: `/etc/openstack_deploy/conf.d/`.
+
+**Aodh (Alarming Service):** Chưa cần cài
+
+* **Purpose:** Aodh provides the alarm functionality for OpenStack’s Telemetry system.
+* **Usage:** It monitors OpenStack resources and triggers alarms based on defined thresholds.
+* **Example:** Send alerts when CPU usage exceeds a certain percentage.
+
+**Barbican (Key Management Service)**: Chưa cần cài
+
+- **Purpose:** Barbican manages and stores secrets, encryption keys, and certificates.
+- **Usage:** Used to protect sensitive data and integrate with security services like SSL/TLS.
+- **Example:** Store and retrieve encryption keys for Cinder volumes.
+
+**Ceilometer (Telemetry Data Collection)**: Chưa cần cài
+
+- **Purpose:** Ceilometer collects usage and performance metrics from OpenStack services.
+- **Usage:** Helps in billing, monitoring, and auto-scaling resources.
+- **Example:** Track CPU and memory usage of VMs for chargeback calculations.
+
+**Ceph (Distributed Storage)**: Chưa cần cài
+
+- **Purpose:** Ceph provides scalable, fault-tolerant storage for OpenStack.
+- **Usage:** Used as a backend for **Cinder (block storage), Glance (image storage), and Swift (object storage).**
+- **Example:** Store virtual machine disk images in a highly available Ceph cluster.
+
+**Cinder (Block Storage Service)**
+
+- **Purpose:** Provides persistent block storage for OpenStack VMs.
+
+- **Usage:** Similar to AWS EBS (Elastic Block Store), it allows VMs to attach/detach storage.
+
+- **Example:** Create a 100GB volume and attach it to a running Nova VM.
+
+  ```yaml
+  ---
+  storage-infra_hosts:
+    shisui:
+      ip: 172.29.236.100
+      container_vars:
+        cinder_qos_specs:
+          - name: low-iops
+            options:
+              consumer: front-end
+              read_iops_sec: 75
+              write_iops_sec: 75
+            cinder_volume_types:
+              - low-iops
+          - name: high-iops
+            options:
+              consumer: front-end
+              read_iops_sec: 150
+              write_iops_sec: 150
+            cinder_volume_types:
+              - high-iops
+          - name: ultra-high-iops
+            options:
+              consumer: front-end
+              read_iops_sec: 300
+              write_iops_sec: 300
+            cinder_volume_types:
+              - ultra-high-iops
+  
+  storage_hosts:
+    shisui:
+      ip: 172.29.236.100
+  ```
+
+**Glance (Image Service)**
+
+- **Purpose:** Manages and serves VM disk images.
+
+- **Usage:** Used by Nova to boot instances from images.
+
+- **Example:** Upload an Ubuntu 22.04 image and launch new instances from it.
+
+- `/etc/openstack_deploy/conf.d/glance.yml`:
+
+  ```yaml
+  ---
+  image_hosts:
+    shisui:
+      ip: 172.29.236.100
+  ```
+
+**Gnocchi (Time-Series Database)**: Chưa cần cài
+
+- **Purpose:** A metric storage service optimized for performance and scalability.
+- **Usage:** Stores monitoring and telemetry data collected by Ceilometer.
+- **Example:** Track disk I/O usage over time and visualize trends.
+
+**Horizon (Web UI Dashboard)**
+
+- **Purpose:** The official web-based user interface for OpenStack.
+
+- **Usage:** Provides a graphical interface to manage instances, networks, storage, and users.
+
+- **Example:** Create and manage a new instance via the Horizon dashboard.
+
+- `/etc/openstack_deploy/conf.d/horizon.yml`:
+
+  ```yaml
+  ---
+  dashboard_hosts:
+    shisui:
+      ip: 172.29.236.100
+  ```
+
+**Neutron (Networking Service)**
+
+- **Purpose:** Manages networking in OpenStack, including VLANs, floating IPs, and SDN integration.
+
+- **Usage:** Provides networking-as-a-service for VMs.
+
+- **Example:** Create a private network and attach instances to it.
+
+- `/etc/openstack_deploy/conf.d/neutron.yml`:
+
+  ```yaml
+  ---
+  
+  # neutron-server, neutron-agents
+  network_hosts:
+    shisui:
+      ip: 172.29.236.100
+  
+  #{% if _neutron_plugin_driver == 'ml2.ovn'  %}
+  network-gateway_hosts:
+    shisui:
+      ip: 172.29.236.100
+  
+  network-northd_hosts:
+    shisui:
+      ip: 172.29.236.100
+  ```
+
+### **Nova (Compute Service)**
+
+- **Purpose:** Manages and orchestrates virtual machine instances.
+
+- **Usage:** The core service for launching and managing VMs.
+
+- **Example:** Launch a VM with 4 vCPUs and 8GB RAM.
+
+- /etc/openstack_deploy/conf.d/nova.yml:
+  ```yaml
+  ---
+  compute-infra_hosts:
+    shisui:
+      ip: 172.29.236.100
+  
+  compute_hosts:
+    shisui:
+      ip: 172.29.236.100
+  ```
+
+**Keystone** – Identity service (user authentication & authorization)
+
+* `/etc/openstack_deploy/conf.d/keystone.yml`:
+
+  ```yaml
+  ---
+  identity_hosts:
+    shisui:
+      ip: 172.29.236.100
+  ```
 
 * HaProxy service: `/etc/openstack_deploy/conf.d/haproxy.yml`
   ```yaml
@@ -515,7 +680,21 @@ Cấu hình file `/etc/openstack_deploy/user_variables.yml`:
   $ sudo ./scripts/pw-token-gen.py --file /etc/openstack_deploy/user_secrets.yml
   Creating backup file [ /etc/openstack_deploy/user_secrets.yml.tar ]
   Operation Complete, [ /etc/openstack_deploy/user_secrets.yml ] is ready
+  
+  
+  
+  
   ```
+
+
+
+Chạy lệnh sau để kiểm tra config:
+
+```
+$ sudo python3 /opt/openstack-ansible/inventory/dynamic_inventory.py --list
+```
+
+
 
 ## IV. Run playbooks
 
@@ -539,6 +718,27 @@ shisui-memcached-container-2ff984ea : ok=93   changed=5    unreachable=0    fail
 shisui-rabbit-mq-container-dbb60554 : ok=99   changed=28   unreachable=0    failed=0    skipped=33   rescued=0    ignored=0   
 shisui-repo-container-09b29ca1 : ok=93   changed=5    unreachable=0    failed=0    skipped=35   rescued=0    ignored=0   
 shisui-utility-container-7da7102e : ok=93   changed=5    unreachable=0    failed=0    skipped=35   rescued=0    ignored=0   
+
+
+
+EXIT NOTICE [Playbook execution success] **************************************
+===============================================================================
+
+PLAY RECAP **************************************************************************************************************************************
+localhost                  : ok=22   changed=0    unreachable=0    failed=0    skipped=25   rescued=0    ignored=0   
+shisui                     : ok=178  changed=4    unreachable=0    failed=0    skipped=115  rescued=0    ignored=0   
+shisui-cinder-api-container-415285c1 : ok=108  changed=49   unreachable=0    failed=0    skipped=34   rescued=0    ignored=0   
+shisui-galera-container-426943cc : ok=105  changed=49   unreachable=0    failed=0    skipped=34   rescued=0    ignored=0   
+shisui-glance-container-faccd24f : ok=105  changed=49   unreachable=0    failed=0    skipped=34   rescued=0    ignored=0   
+shisui-horizon-container-4f58f3ba : ok=105  changed=49   unreachable=0    failed=0    skipped=34   rescued=0    ignored=0   
+shisui-keystone-container-101d5b0e : ok=105  changed=49   unreachable=0    failed=0    skipped=34   rescued=0    ignored=0   
+shisui-memcached-container-4418d5bd : ok=105  changed=49   unreachable=0    failed=0    skipped=34   rescued=0    ignored=0   
+shisui-neutron-ovn-northd-container-37769303 : ok=105  changed=49   unreachable=0    failed=0    skipped=34   rescued=0    ignored=0   
+shisui-neutron-server-container-b83bad9a : ok=105  changed=49   unreachable=0    failed=0    skipped=34   rescued=0    ignored=0   
+shisui-nova-api-container-c82f5902 : ok=105  changed=49   unreachable=0    failed=0    skipped=34   rescued=0    ignored=0   
+shisui-rabbit-mq-container-8ccf2402 : ok=105  changed=49   unreachable=0    failed=0    skipped=34   rescued=0    ignored=0   
+shisui-repo-container-02d3d3de : ok=105  changed=49   unreachable=0    failed=0    skipped=34   rescued=0    ignored=0   
+shisui-utility-container-df2dfac2 : ok=105  changed=49   unreachable=0    failed=0    skipped=34   rescued=0    ignored=0   
 
 
 
